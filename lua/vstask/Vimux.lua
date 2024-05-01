@@ -15,8 +15,8 @@ local function Vimux_process(command, direction, opts)
   --   opt_direction = ' direction=' .. opt_direction
   -- end
   vim.cmd("!echo " .. command)
-  vim.cmd('VimuxRunCommand "' .. command .. '"')
-  vim.cmd("VimuxZoomRunner")
+  -- vim.cmd('VimuxRunCommand "' .. command .. '"')
+  -- vim.cmd("VimuxZoomRunner")
 end
 
 return { Process = Vimux_process }
