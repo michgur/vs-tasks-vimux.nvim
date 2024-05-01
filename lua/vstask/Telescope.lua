@@ -44,10 +44,11 @@ local function format_command(pre, options)
   if nil ~= options then
     local cwd = options["cwd"]
     if nil ~= cwd then
-      cwd = Parse.replace(cwd)
-      local cd_command = string.format("cd %s", cwd)
-      command = string.format("%s && %s", cd_command, command)
+      cwd = "${cwd}"
     end
+    cwd = Parse.replace(cwd)
+    local cd_command = string.format("cd %s", cwd)
+    command = string.format("%s && %s", cd_command, command)
   end
   command = Parse.replace(command)
   return {
