@@ -1,16 +1,16 @@
-local actions = require('telescope.actions')
-local state  = require('telescope.actions.state')
-local finders = require('telescope.finders')
-local pickers = require('telescope.pickers')
-local sorters = require('telescope.sorters')
-local Parse = require('vstask.Parse')
-local Opts = require('vstask.Opts')
+local actions = require("telescope.actions")
+local state = require("telescope.actions.state")
+local finders = require("telescope.finders")
+local pickers = require("telescope.pickers")
+local sorters = require("telescope.sorters")
+local Parse = require("vstask.Parse")
+local Opts = require("vstask.Opts")
 local Command_handler = nil
 local Mappings = {
-  vertical = '<C-v>',
-  split = '<C-p>',
-  tab = '<C-t>',
-  current = '<CR>'
+  vertical = "<C-v>",
+  split = "<C-p>",
+  tab = "<C-t>",
+  current = "<CR>",
 }
 
 local command_history = {}
@@ -20,7 +20,7 @@ local function set_history(label, command, options)
       command = command,
       options = options,
       label = label,
-      hits = 1
+      hits = 1,
     }
   else
     command_history[label].hits = command_history[label].hits + 1
@@ -32,7 +32,7 @@ local last_cmd = nil
 local Term_opts = {}
 
 local function set_term_opts(new_opts)
-    Term_opts= new_opts
+  Term_opts = new_opts
 end
 
 local function get_last()
@@ -42,20 +42,20 @@ end
 local function format_command(pre, options)
   local command = pre
   if nil ~= options then
-      local cwd = options["cwd"]
-      if nil ~= cwd then
-          local cd_command = string.format("cd %s", cwd)
-          command = string.format("%s && %s", cd_command, command)
-      end
+    local cwd = options["cwd"]
+    if nil ~= cwd then
+      cwd = Parse.replace(cwd)
+      local cd_command = string.format("cd %s", cwd)
+      command = string.format("%s && %s", cd_command, command)
+    end
   end
   command = Parse.replace(command)
   return {
     pre = pre,
     command = command,
-    options = options
+    options = options,
   }
 end
-
 
 local function set_mappings(new_mappings)
   if new_mappings.vertical ~= nil then
@@ -72,7 +72,6 @@ local function set_mappings(new_mappings)
   end
 end
 
-
 local process_command = function(command, direction, opts)
   last_cmd = command
   if Command_handler ~= nil then
@@ -81,20 +80,18 @@ local process_command = function(command, direction, opts)
     local opt_direction = Opts.get_direction(direction, opts)
     local size = Opts.get_size(direction, opts)
     local command_map = {
-      vertical = { size = 'vertical resize', command = 'vsplit' },
-      horizontal = { size = 'resize ', command = 'split' },
-      tab = { command = 'tabnew' },
+      vertical = { size = "vertical resize", command = "vsplit" },
+      horizontal = { size = "resize ", command = "split" },
+      tab = { command = "tabnew" },
     }
 
     if command_map[opt_direction] ~= nil then
       vim.cmd(command_map[opt_direction].command)
-      if command_map[opt_direction].size ~= nil  and size ~= nil then
+      if command_map[opt_direction].size ~= nil and size ~= nil then
         vim.cmd(command_map[opt_direction].size .. size)
       end
     end
-    vim.cmd(
-      string.format('terminal echo "%s" && %s', command, command)
-    )
+    vim.cmd(string.format('terminal echo "%s" && %s', command, command))
   end
 end
 
@@ -111,42 +108,42 @@ local function inputs(opts)
     return
   end
 
-  local  inputs_formatted = {}
+  local inputs_formatted = {}
   local selection_list = {}
 
   for _, input_dict in pairs(input_list) do
     local add_current = ""
     if input_dict["value"] ~= "" then
-        add_current = " [" .. input_dict["value"] .. "] "
+      add_current = " [" .. input_dict["value"] .. "] "
     end
     local current_task = input_dict["id"] .. add_current .. " => " .. input_dict["description"]
     table.insert(inputs_formatted, current_task)
     table.insert(selection_list, input_dict)
   end
 
-  pickers.new(opts, {
-    prompt_title = 'Inputs',
-    finder    = finders.new_table {
-      results = inputs_formatted
-    },
-    sorter = sorters.get_generic_fuzzy_sorter(),
-    attach_mappings = function(prompt_bufnr, map)
+  pickers
+      .new(opts, {
+        prompt_title = "Inputs",
+        finder = finders.new_table({
+          results = inputs_formatted,
+        }),
+        sorter = sorters.get_generic_fuzzy_sorter(),
+        attach_mappings = function(prompt_bufnr, map)
+          local start_task = function()
+            local selection = state.get_selected_entry(prompt_bufnr)
+            actions.close(prompt_bufnr)
 
-      local start_task = function()
-        local selection = state.get_selected_entry(prompt_bufnr)
-        actions.close(prompt_bufnr)
+            local input = selection_list[selection.index]["id"]
+            Parse.Set(input)
+          end
 
-        local input = selection_list[selection.index]["id"]
-        Parse.Set(input)
-      end
+          map("i", "<CR>", start_task)
+          map("n", "<CR>", start_task)
 
-
-      map('i', '<CR>', start_task)
-      map('n', '<CR>', start_task)
-
-      return true
-    end
-  }):find()
+          return true
+        end,
+      })
+      :find()
 end
 
 local function start_launch_direction(direction, prompt_bufnr, _, selection_list)
@@ -173,7 +170,7 @@ local function start_task_direction(direction, promp_bufnr, _, selection_list)
   local args = selection_list[selection.index]["args"]
   set_history(label, command, options)
   local formatted_command = format_command(command, options)
-  if(args ~= nil) then
+  if args ~= nil then
     formatted_command.command = Parse.Build_launch(formatted_command.command, args)
   end
   process_command(formatted_command.command, direction, Term_opts)
@@ -188,46 +185,49 @@ local function history(opts)
   for _, command in pairs(command_history) do
     table.insert(sorted_history, command)
   end
-  table.sort(sorted_history, function(a, b) return a.hits > b.hits end)
+  table.sort(sorted_history, function(a, b)
+    return a.hits > b.hits
+  end)
 
   -- build label table
-  local  labels = {}
+  local labels = {}
   for i = 1, #sorted_history do
     local current_task = sorted_history[i]["label"]
     table.insert(labels, current_task)
   end
 
-
-  pickers.new(opts, {
-    prompt_title = 'Task History',
-    finder    = finders.new_table {
-      results = labels
-    },
-    sorter = sorters.get_generic_fuzzy_sorter(),
-    attach_mappings = function(prompt_bufnr, map)
-      local function start_task()
-        start_task_direction('current', prompt_bufnr, map, sorted_history)
-      end
-      local function start_task_vertical()
-        start_task_direction('vertical', prompt_bufnr, map, sorted_history)
-      end
-      local function start_task_split()
-        start_task_direction('horizontal', prompt_bufnr, map, sorted_history)
-      end
-      local function start_task_tab()
-        start_task_direction('tab', prompt_bufnr, map, sorted_history)
-      end
-      map('i', Mappings.current, start_task)
-      map('n', Mappings.current, start_task)
-      map('i', Mappings.vertical, start_task_vertical)
-      map('n', Mappings.vertical, start_task_vertical)
-      map('i', Mappings.split, start_task_split)
-      map('n', Mappings.split, start_task_split)
-      map('i', Mappings.tab, start_task_tab)
-      map('n', Mappings.tab, start_task_tab)
-      return true
-    end
-  }):find()
+  pickers
+      .new(opts, {
+        prompt_title = "Task History",
+        finder = finders.new_table({
+          results = labels,
+        }),
+        sorter = sorters.get_generic_fuzzy_sorter(),
+        attach_mappings = function(prompt_bufnr, map)
+          local function start_task()
+            start_task_direction("current", prompt_bufnr, map, sorted_history)
+          end
+          local function start_task_vertical()
+            start_task_direction("vertical", prompt_bufnr, map, sorted_history)
+          end
+          local function start_task_split()
+            start_task_direction("horizontal", prompt_bufnr, map, sorted_history)
+          end
+          local function start_task_tab()
+            start_task_direction("tab", prompt_bufnr, map, sorted_history)
+          end
+          map("i", Mappings.current, start_task)
+          map("n", Mappings.current, start_task)
+          map("i", Mappings.vertical, start_task_vertical)
+          map("n", Mappings.vertical, start_task_vertical)
+          map("i", Mappings.split, start_task_split)
+          map("n", Mappings.split, start_task_split)
+          map("i", Mappings.tab, start_task_tab)
+          map("n", Mappings.tab, start_task_tab)
+          return true
+        end,
+      })
+      :find()
 end
 
 local function tasks(opts)
@@ -239,51 +239,52 @@ local function tasks(opts)
     return
   end
 
-  local  tasks_formatted = {}
+  local tasks_formatted = {}
 
   for i = 1, #task_list do
     local current_task = task_list[i]["label"]
     table.insert(tasks_formatted, current_task)
   end
 
-  pickers.new(opts, {
-    prompt_title = 'Tasks',
-    finder    = finders.new_table {
-      results = tasks_formatted
-    },
-    sorter = sorters.get_generic_fuzzy_sorter(),
-    attach_mappings = function(prompt_bufnr, map)
+  pickers
+      .new(opts, {
+        prompt_title = "Tasks",
+        finder = finders.new_table({
+          results = tasks_formatted,
+        }),
+        sorter = sorters.get_generic_fuzzy_sorter(),
+        attach_mappings = function(prompt_bufnr, map)
+          local start_task = function()
+            start_task_direction("current", prompt_bufnr, map, task_list)
+          end
 
-      local start_task = function()
-        start_task_direction('current', prompt_bufnr, map, task_list)
-      end
+          local start_in_vert = function()
+            start_task_direction("vertical", prompt_bufnr, map, task_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_vert = function()
-        start_task_direction('vertical', prompt_bufnr, map, task_list)
-        vim.cmd('normal! G')
-      end
+          local start_in_split = function()
+            start_task_direction("horizontal", prompt_bufnr, map, task_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_split = function()
-        start_task_direction('horizontal', prompt_bufnr, map, task_list)
-        vim.cmd('normal! G')
-      end
+          local start_in_tab = function()
+            start_task_direction("tab", prompt_bufnr, map, task_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_tab = function()
-        start_task_direction('tab', prompt_bufnr, map, task_list)
-        vim.cmd('normal! G')
-      end
-
-      map('i', Mappings.current, start_task)
-      map('n', Mappings.current, start_task)
-      map('i', Mappings.vertical, start_in_vert)
-      map('n', Mappings.vertical, start_in_vert)
-      map('i', Mappings.split, start_in_split)
-      map('n', Mappings.split, start_in_split)
-      map('i', Mappings.tab, start_in_tab)
-      map('n', Mappings.tab, start_in_tab)
-      return true
-    end
-  }):find()
+          map("i", Mappings.current, start_task)
+          map("n", Mappings.current, start_task)
+          map("i", Mappings.vertical, start_in_vert)
+          map("n", Mappings.vertical, start_in_vert)
+          map("i", Mappings.split, start_in_split)
+          map("n", Mappings.split, start_in_split)
+          map("i", Mappings.tab, start_in_tab)
+          map("n", Mappings.tab, start_in_tab)
+          return true
+        end,
+      })
+      :find()
 end
 
 local function launches(opts)
@@ -295,51 +296,52 @@ local function launches(opts)
     return
   end
 
-  local  launch_formatted = {}
+  local launch_formatted = {}
 
   for i = 1, #launch_list do
     local current_launch = launch_list[i]["name"]
     table.insert(launch_formatted, current_launch)
   end
 
-  pickers.new(opts, {
-    prompt_title = 'Launches',
-    finder    = finders.new_table {
-      results = launch_formatted
-    },
-    sorter = sorters.get_generic_fuzzy_sorter(),
-    attach_mappings = function(prompt_bufnr, map)
+  pickers
+      .new(opts, {
+        prompt_title = "Launches",
+        finder = finders.new_table({
+          results = launch_formatted,
+        }),
+        sorter = sorters.get_generic_fuzzy_sorter(),
+        attach_mappings = function(prompt_bufnr, map)
+          local start_task = function()
+            start_launch_direction("current", prompt_bufnr, map, launch_list)
+          end
 
-      local start_task = function()
-        start_launch_direction('current', prompt_bufnr, map, launch_list)
-      end
+          local start_in_vert = function()
+            start_launch_direction("vertical", prompt_bufnr, map, launch_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_vert = function()
-        start_launch_direction('vertical', prompt_bufnr, map, launch_list)
-        vim.cmd('normal! G')
-      end
+          local start_in_split = function()
+            start_launch_direction("horizontal", prompt_bufnr, map, launch_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_split = function()
-        start_launch_direction('horizontal', prompt_bufnr, map, launch_list)
-        vim.cmd('normal! G')
-      end
+          local start_in_tab = function()
+            start_launch_direction("tab", prompt_bufnr, map, launch_list)
+            vim.cmd("normal! G")
+          end
 
-      local start_in_tab = function()
-        start_launch_direction('tab', prompt_bufnr, map, launch_list)
-        vim.cmd('normal! G')
-      end
-
-      map('i', Mappings.current, start_task)
-      map('n', Mappings.current, start_task)
-      map('i', Mappings.vertical, start_in_vert)
-      map('n', Mappings.vertical, start_in_vert)
-      map('i', Mappings.split, start_in_split)
-      map('n', Mappings.split, start_in_split)
-      map('i', Mappings.tab, start_in_tab)
-      map('n', Mappings.tab, start_in_tab)
-      return true
-    end
-  }):find()
+          map("i", Mappings.current, start_task)
+          map("n", Mappings.current, start_task)
+          map("i", Mappings.vertical, start_in_vert)
+          map("n", Mappings.vertical, start_in_vert)
+          map("i", Mappings.split, start_in_split)
+          map("n", Mappings.split, start_in_split)
+          map("i", Mappings.tab, start_in_tab)
+          map("n", Mappings.tab, start_in_tab)
+          return true
+        end,
+      })
+      :find()
 end
 
 return {
