@@ -43,8 +43,9 @@ local function format_command(pre, options)
   local command = pre
   if nil ~= options then
     local cwd = options["cwd"]
-    if nil ~= cwd then
-      cwd = "${cwd}"
+    -- if cwd is nil, set is to be ${workspaceFolder}
+    if cwd == nil then
+      cwd = "${workspaceFolder}"
     end
     cwd = Parse.replace(cwd)
     -- escape spaces in the path
