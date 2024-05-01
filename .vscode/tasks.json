@@ -12,7 +12,10 @@
       "command": "echo ${input:phrase} | cowsay",
       "label": "🐮 Cowsay",
       "problemMatcher": [],
-      "type": "shell"
+      "type": "shell",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
     },
     {
       "command": "echo ${relativeFile} | cowsay",
