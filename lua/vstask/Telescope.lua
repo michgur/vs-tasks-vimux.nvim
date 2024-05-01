@@ -47,6 +47,8 @@ local function format_command(pre, options)
       cwd = "${cwd}"
     end
     cwd = Parse.replace(cwd)
+    -- escape spaces in the path
+    cwd = string.gsub(cwd, " ", "\\ ")
     local cd_command = string.format("cd %s", cwd)
     command = string.format("%s && %s", cd_command, command)
   end
