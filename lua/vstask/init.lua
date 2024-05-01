@@ -5,7 +5,6 @@ M.Config = require("vstask.Config")
 M.Telescope = require("vstask.Telescope")
 M.Parse = require("vstask.Parse")
 
-
 function M.setup(opts)
   if opts == nil then
     return
@@ -14,6 +13,8 @@ function M.setup(opts)
     M.Telescope.Set_command_handler(require("vstask.Harpoon").Process)
   elseif opts.terminal ~= nil and opts.terminal == "toggleterm" then
     M.Telescope.Set_command_handler(require("vstask.ToggleTerm").Process)
+  elseif opts.terminal ~= nil and opts.terminal == "vimux" then
+    M.Telescope.Set_command_handler(require("vstask.Vimux").Process)
   end
   if opts.telescope_keys ~= nil then
     M.Telescope.Set_mappings(opts.telescope_keys)
