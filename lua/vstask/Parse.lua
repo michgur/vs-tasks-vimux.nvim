@@ -58,7 +58,7 @@ local function setContains(set, key)
 end
 
 local function get_inputs()
-  if Inputs ~= nil and Inputs ~= {} then
+  if Inputs ~= nil and next(Inputs) ~= nil then
     return Inputs
   end
   local path = vim.fn.getcwd() .. "/" .. config_dir .. "/tasks.json"
