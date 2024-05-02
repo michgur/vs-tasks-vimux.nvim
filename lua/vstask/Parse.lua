@@ -1,6 +1,6 @@
 local Inputs = {}
 local Config = require("vstask.Config")
-local Predefined = require('vstask.Predefined')
+local Predefined = require("vstask.Predefined")
 
 local cache_json_conf = true
 
@@ -9,15 +9,15 @@ local function set_cache_json_conf(value)
 end
 
 local auto_detect = {
-  npm = "on"
+  npm = "on",
 }
 
 local config_dir = ".vscode"
 
 local function set_config_dir(dirname)
-    if string.match(dirname, [[^[%w-\.]+$]]) ~= nil then
-        config_dir = dirname
-    end
+  if string.match(dirname, [[^[%w-\.]+$]]) ~= nil then
+    config_dir = dirname
+  end
 end
 
 local function set_autodetect(autodetect)
@@ -54,11 +54,11 @@ local function file_exists(name)
 end
 
 local function setContains(set, key)
-    return set[key] ~= nil
+  return set[key] ~= nil
 end
 
 local function get_inputs()
-  if Inputs ~= nil then
+  if Inputs ~= nil and Inputs ~= {} then
     return Inputs
   end
   local path = vim.fn.getcwd() .. "/" .. config_dir .. "/tasks.json"
@@ -67,7 +67,7 @@ local function get_inputs()
     return {}
   end
   local config = Config.load_json(path, JSON_PARSER)
-  if (not setContains(config, "inputs")) then
+  if not setContains(config, "inputs") then
     Inputs = {}
     return Inputs
   end
@@ -99,7 +99,7 @@ local function cache_scheme(cache_list, fn)
   local tasks_with_hits = {}
   local other_tasks = {}
   for _, task in pairs(cache_list) do
-    if (task.hits > 0) then
+    if task.hits > 0 then
       table.insert(tasks_with_hits, task)
     else
       table.insert(other_tasks, task)
@@ -118,10 +118,10 @@ local function cache_scheme(cache_list, fn)
 end
 
 local function manage_cache(cache_list, scheme)
-  if (scheme == nil or scheme == "last") then
+  if scheme == nil or scheme == "last" then
     return cache_scheme(cache_list, time_sorter)
   end
-  if (scheme == "most") then
+  if scheme == "most" then
     return cache_scheme(cache_list, hit_sorter)
   end
 end
@@ -131,7 +131,7 @@ local function create_cache(raw_list, key)
   for _, entry in pairs(raw_list) do
     local cache_key = entry[key]
     if cache_key then
-      new_cache[cache_key] = {entry = entry, hits = 0, timestamp = os.time()}
+      new_cache[cache_key] = { entry = entry, hits = 0, timestamp = os.time() }
     end
   end
   return new_cache
@@ -144,7 +144,7 @@ local function update_cache(cache, key)
   if cache[key] == nil then
     return
   end
-  if (cache[key] ~= nil) then
+  if cache[key] ~= nil then
     cache[key].hits = cache[key].hits + 1
     cache[key].timestamp = os.time()
   end
@@ -155,7 +155,7 @@ local function auto_detect_npm()
     return {}
   end
   local cwd = vim.fn.getcwd()
-  local packagejson = cwd .."/package.json"
+  local packagejson = cwd .. "/package.json"
   local script_tasks = {}
 
   if not file_exists(packagejson) then
@@ -163,11 +163,11 @@ local function auto_detect_npm()
   end
 
   local config = Config.load_json(packagejson, JSON_PARSER)
-  if (setContains(config, "scripts")) then
+  if setContains(config, "scripts") then
     local scripts = config["scripts"]
     for key in pairs(scripts) do
       local label = "npm: " .. key
-      table.insert(script_tasks, {label = label, type = "npm", command = 'npm run ' .. key})
+      table.insert(script_tasks, { label = label, type = "npm", command = "npm run " .. key })
     end
   end
   return script_tasks
@@ -184,7 +184,6 @@ local function get_tasks()
     vim.notify(MISSING_FILE_MESSAGE, "error")
     return {}
   end
-
 
   get_inputs()
   local tasks = Config.load_json(path, JSON_PARSER)
@@ -221,7 +220,7 @@ local function get_input_variable(getvar, inputs)
     if input_dict["id"] == getvar then
       return input_dict["value"]
     else
-      print("no match for: ".. input_dict["value"])
+      print("no match for: " .. input_dict["value"])
     end
   end
 end
@@ -252,9 +251,9 @@ end
 local function get_predefined_variables(command)
   local predefined_vars = {}
   local count = 0
-  for defined_var, _ in pairs(Predefined ) do
+  for defined_var, _ in pairs(Predefined) do
     local match_pattern = "${" .. defined_var .. "}"
-    for w in string.gmatch(command,  match_pattern) do
+    for w in string.gmatch(command, match_pattern) do
       if w ~= nil then
         for word in string.gmatch(command, "%{(%a+)}") do
           table.insert(predefined_vars, word)
@@ -343,5 +342,5 @@ return {
   Set_autodetect = set_autodetect,
   Set_cache_json_conf = set_cache_json_conf,
   Set_config_dir = set_config_dir,
-  Set_json_parser = set_json_parser
+  Set_json_parser = set_json_parser,
 }
